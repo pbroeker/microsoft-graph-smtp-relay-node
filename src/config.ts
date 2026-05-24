@@ -68,11 +68,6 @@ export const config = {
   logLevel: process.env.LOG_LEVEL?.toLowerCase() || 'info',
   nodeEnv: process.env.NODE_ENV ?? 'development',
   isProduction: process.env.NODE_ENV === 'production',
-
-  testFromAddress: process.env.TEST_FROM_ADDRESS || 'me@company.com',
-  testToAddress: process.env.TEST_TO_ADDRESS || 'me@company.com',
-  testCcAddress: process.env.TEST_CC_ADDRESS || 'Test Me <me@company.com>',
-  testBccAddress: process.env.TEST_BCC_ADDRESS || '<me@company.com>',
 } as const;
 
 export function getSmtpConnectHost(): string {
