@@ -1,22 +1,15 @@
 import * as nodemailer from 'nodemailer';
-import * as fs from 'fs';
 import * as path from 'path';
+import { config, getSmtpConnectHost } from '../src/config';
 
-if (!process.env.SMTP_RELAY_HOSTNAME) {
-  require('dotenv').config();
-}
+const to = [config.testToAddress];
+const cc = [config.testCcAddress];
+const bcc = [config.testBccAddress];
 
-const to = [process.env.TEST_TO_ADDRESS || 'me@company.com'];
-const cc = [process.env.TEST_CC_ADDRESS || 'Test Me <me@company.com>'];
-const bcc = [process.env.TEST_BCC_ADDRESS || '<me@company.com>'];
-
-const smtpServer =
-  process.env.SMTP_RELAY_HOSTNAME === '0.0.0.0'
-    ? 'localhost'
-    : process.env.SMTP_RELAY_HOSTNAME || 'localhost';
-const smtpPort = parseInt(process.env.SMTP_RELAY_PORT || '25', 10);
-const smtpUser = process.env.SMTP_AUTH_USER || 'me@company.com';
-const smtpPass = process.env.SMTP_AUTH_PASS || 'me@company.com';
+const smtpServer = getSmtpConnectHost();
+const smtpPort = config.smtpRelayPort;
+const smtpUser = config.smtpAuthUser || 'me@company.com';
+const smtpPass = config.smtpAuthPass || 'me@company.com';
 
 async function main() {
   const testDir = path.resolve(__dirname, '..', 'test');
@@ -36,7 +29,7 @@ async function main() {
   const pdfPath = path.join(testDir, 'doc.pdf');
 
   const info = await transporter.sendMail({
-    from: process.env.TEST_FROM_ADDRESS || 'me@company.com',
+    from: config.testFromAddress,
     to: to.join(', '),
     cc: cc.join(', '),
     bcc: bcc.join(', '),

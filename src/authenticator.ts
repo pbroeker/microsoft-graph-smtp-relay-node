@@ -1,10 +1,11 @@
 import { SMTPServerSession, SMTPServerAuthentication } from 'smtp-server';
+import { config } from './config';
 import { logger } from './logger';
 import { eventBusInstance } from './event-bus';
 
 export function createAuthenticator() {
-  const smtpUser = process.env.SMTP_AUTH_USER;
-  const smtpPass = process.env.SMTP_AUTH_PASS;
+  const smtpUser = config.smtpAuthUser;
+  const smtpPass = config.smtpAuthPass;
 
 
   return function onAuth(

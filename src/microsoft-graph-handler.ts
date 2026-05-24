@@ -3,6 +3,7 @@ import { ClientSecretCredential } from "@azure/identity";
 import { Readable } from "stream";
 import "isomorphic-fetch";
 import * as ipaddr from "ipaddr.js";
+import { config } from "./config";
 import { logger } from "./logger";
 import { eventBusInstance } from "./event-bus";
 import { AllowedNetwork } from "./types";
@@ -19,9 +20,9 @@ export class MicrosoftGraphHandler {
   constructor(allowedNetworks: AllowedNetwork[]) {
     this.allowedNetworks = allowedNetworks;
     this.credential = new ClientSecretCredential(
-      process.env.TENANT_ID!,
-      process.env.CLIENT_ID!,
-      process.env.CLIENT_SECRET!,
+      config.tenantId,
+      config.clientId,
+      config.clientSecret,
     );
   }
 
@@ -114,7 +115,7 @@ export class MicrosoftGraphHandler {
             att.name,
             "Attachment upload failed after retries",
           );
-          if (process.env.ALLOW_SEND_INCOMPLETE !== "true") {
+          if (!config.allowSendIncomplete) {
             const err: any = new Error("Unable to process attachments");
             err.responseCode = 550;
             callback(err);
@@ -140,8 +141,8 @@ export class MicrosoftGraphHandler {
 
       await this.sendDraft(sender, messageId);
 
-      if (process.env.SAVE_TO_SENT !== "true") {
-        if (process.env.SOFT_DELETE === "true") {
+      if (!config.saveToSent) {
+        if (config.softDelete) {
           await this.deleteMessage(sender, messageId);
         } else {
           await this.permanentDeleteMessage(sender, messageId);

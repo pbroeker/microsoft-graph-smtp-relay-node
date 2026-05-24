@@ -1,24 +1,11 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { getMissingRequiredEnvVars } from './config';
 import { logger } from './logger';
 import { MicrosoftGraphSmtp } from './server';
 
 async function main(): Promise<void> {
-  if (!process.env.CLIENT_ID) {
-    try {
-      const envPath = path.resolve('.env');
-      if (fs.existsSync(envPath)) {
-        require('dotenv').config();
-      }
-    } catch { }
-  }
-
-  const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET'];
-  for (const varName of requiredEnvVars) {
-    if (!process.env[varName]) {
-      logger.error({ varName }, `Environment variable ${varName} is required`);
-      process.exit(1);
-    }
+  for (const varName of getMissingRequiredEnvVars()) {
+    logger.error({ varName }, `Environment variable ${varName} is required`);
+    process.exit(1);
   }
 
   const controller = new MicrosoftGraphSmtp();

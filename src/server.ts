@@ -1,6 +1,7 @@
 import { SMTPServer, SMTPServerOptions } from 'smtp-server';
 import { Readable } from 'stream';
 import * as ipaddr from 'ipaddr.js';
+import { config } from './config';
 import { logger } from './logger';
 import { MicrosoftGraphHandler } from './microsoft-graph-handler';
 import { createAuthenticator } from './authenticator';
@@ -15,8 +16,8 @@ export class MicrosoftGraphSmtp {
   port: number;
 
   constructor() {
-    this.hostname = process.env.SMTP_RELAY_HOSTNAME || '0.0.0.0';
-    this.port = parseInt(process.env.SMTP_RELAY_PORT || '25', 10);
+    this.hostname = config.smtpRelayHostname;
+    this.port = config.smtpRelayPort;
 
     const allowedNetworks = this.parseAllowedNetworks();
     const authenticator = createAuthenticator();
@@ -40,7 +41,7 @@ export class MicrosoftGraphSmtp {
   }
 
   private parseAllowedNetworks(): AllowedNetwork[] {
-    const allowedIps = process.env.ALLOWED_IPS || '';
+    const allowedIps = config.allowedIps;
     const networks: AllowedNetwork[] = [];
 
     for (const item of allowedIps.split(',')) {
@@ -91,7 +92,7 @@ export class MicrosoftGraphSmtp {
   }
 
   private loadMiddleware(): void {
-    const middlewareDir = process.env.MIDDLEWARE_DIR || '';
+    const middlewareDir = config.middlewareDir;
     if (middlewareDir) {
       loadMiddleware(middlewareDir, this.handler);
     }

@@ -1,7 +1,8 @@
 import pino from 'pino';
+import { config } from './config';
 
-const logLevel = process.env.LOG_LEVEL?.toLowerCase() || 'info';
-const isDev = process.env.NODE_ENV !== 'production';
+const logLevel = config.logLevel;
+const isDev = !config.isProduction;
 
 let logger: pino.Logger;
 
