@@ -13,6 +13,7 @@ const smtpPass = config.smtpAuthPass || 'me@company.com';
 
 async function main() {
   const testDir = path.resolve(__dirname, '..', 'test');
+  const useTls = config.smtpAuthMethod === 'tls';
 
   const transporter = nodemailer.createTransport({
     host: smtpServer,
@@ -22,7 +23,7 @@ async function main() {
       user: smtpUser,
       pass: smtpPass,
     },
-    tls: { rejectUnauthorized: false },
+    ...(useTls ? {} : { tls: { rejectUnauthorized: false } }),
   });
 
   const imagePath = path.join(testDir, 'image.jpg');

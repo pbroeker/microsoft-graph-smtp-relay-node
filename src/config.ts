@@ -29,19 +29,37 @@ function envInt(value: string | undefined, defaultValue: number): number {
   return Number.isNaN(parsed) ? defaultValue : parsed;
 }
 
+export type AuthMethod = 'plain' | 'tls';
+
+function authMethodFromEnv(): AuthMethod {
+  const raw = process.env.SMTP_AUTH_METHOD?.toLowerCase();
+  if (raw === 'tls') return 'tls';
+  return 'plain';
+}
+
+function defaultPort(authMethod: AuthMethod): number {
+  return authMethod === 'tls' ? 587 : 25;
+}
+
 loadEnvFile();
+
+const authMethod = authMethodFromEnv();
 
 export const config = {
   tenantId: process.env.TENANT_ID ?? '',
   clientId: process.env.CLIENT_ID ?? '',
   clientSecret: process.env.CLIENT_SECRET ?? '',
 
+  smtpAuthMethod: authMethod,
   smtpRelayHostname: process.env.SMTP_RELAY_HOSTNAME || '0.0.0.0',
-  smtpRelayPort: envInt(process.env.SMTP_RELAY_PORT, 25),
+  smtpRelayPort: envInt(process.env.SMTP_RELAY_PORT, defaultPort(authMethod)),
   smtpAuthUser: process.env.SMTP_AUTH_USER ?? '',
   smtpAuthPass: process.env.SMTP_AUTH_PASS ?? '',
   allowedIps: process.env.ALLOWED_IPS || '',
   middlewareDir: process.env.MIDDLEWARE_DIR || '',
+
+  tlsKeyPath: process.env.TLS_KEY_PATH || '',
+  tlsCertPath: process.env.TLS_CERT_PATH || '',
 
   allowSendIncomplete: envBool(process.env.ALLOW_SEND_INCOMPLETE, false),
   saveToSent: envBool(process.env.SAVE_TO_SENT, false),
@@ -61,12 +79,20 @@ export function getSmtpConnectHost(): string {
   return config.smtpRelayHostname === '0.0.0.0' ? 'localhost' : config.smtpRelayHostname;
 }
 
-const REQUIRED_ENV_VAR_NAMES = ['CLIENT_ID', 'CLIENT_SECRET'] as const;
+const REQUIRED_ENV_VAR_NAMES_BASE = ['CLIENT_ID', 'CLIENT_SECRET'] as const;
+const REQUIRED_ENV_VAR_NAMES_TLS = ['TLS_KEY_PATH', 'TLS_CERT_PATH'] as const;
 
 export function getMissingRequiredEnvVars(): string[] {
-  const values: Record<(typeof REQUIRED_ENV_VAR_NAMES)[number], string> = {
+  const names: readonly string[] = config.smtpAuthMethod === 'tls'
+    ? [...REQUIRED_ENV_VAR_NAMES_BASE, ...REQUIRED_ENV_VAR_NAMES_TLS]
+    : REQUIRED_ENV_VAR_NAMES_BASE;
+
+  const values: Record<string, string> = {
     CLIENT_ID: config.clientId,
     CLIENT_SECRET: config.clientSecret,
+    TLS_KEY_PATH: config.tlsKeyPath,
+    TLS_CERT_PATH: config.tlsCertPath,
   };
-  return REQUIRED_ENV_VAR_NAMES.filter((name) => !values[name]);
+
+  return names.filter((name) => !values[name]);
 }

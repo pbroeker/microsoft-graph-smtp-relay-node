@@ -10,8 +10,7 @@ RUN npm ci --production
 COPY dist/ .
 
 ENV SMTP_RELAY_HOSTNAME=0.0.0.0
-ENV SMTP_RELAY_PORT=25
 
-EXPOSE 25
+EXPOSE 25 587
 
 CMD ["node", "index.js"]

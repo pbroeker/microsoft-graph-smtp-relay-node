@@ -1,5 +1,6 @@
 import { SMTPServer, SMTPServerOptions } from 'smtp-server';
 import { Readable } from 'stream';
+import * as fs from 'fs';
 import * as ipaddr from 'ipaddr.js';
 import { config } from './config';
 import { logger } from './logger';
@@ -8,6 +9,21 @@ import { createAuthenticator } from './authenticator';
 import { loadMiddleware } from './middleware-loader';
 import { eventBusInstance } from './event-bus';
 import { AllowedNetwork } from './types';
+
+function loadTlsCredentials(): { key: string; cert: string } | null {
+  if (!config.tlsKeyPath || !config.tlsCertPath) {
+    return null;
+  }
+  try {
+    return {
+      key: fs.readFileSync(config.tlsKeyPath, 'utf8'),
+      cert: fs.readFileSync(config.tlsCertPath, 'utf8'),
+    };
+  } catch (err) {
+    logger.error({ err }, 'Failed to load TLS credentials');
+    throw err;
+  }
+}
 
 export class MicrosoftGraphSmtp {
   private server: SMTPServer;
@@ -21,11 +37,13 @@ export class MicrosoftGraphSmtp {
 
     const allowedNetworks = this.parseAllowedNetworks();
     const authenticator = createAuthenticator();
+    const tlsCreds = config.smtpAuthMethod === 'tls' ? loadTlsCredentials() : null;
 
     this.handler = new MicrosoftGraphHandler(allowedNetworks);
 
     const options: SMTPServerOptions = {
-      hideSTARTTLS: true,
+      ...(tlsCreds ? { key: tlsCreds.key, cert: tlsCreds.cert } : {}),
+      hideSTARTTLS: config.smtpAuthMethod !== 'tls',
       onConnect: this.onConnect.bind(this, allowedNetworks),
       onAuth: authenticator,
       onData: this.handler.handleData.bind(this.handler),
@@ -100,7 +118,10 @@ export class MicrosoftGraphSmtp {
 
   start(): void {
     this.server.listen(this.port, this.hostname);
-    logger.info({ hostname: this.hostname, port: this.port }, 'SMTP server starting');
+    logger.info(
+      { hostname: this.hostname, port: this.port, authMethod: config.smtpAuthMethod },
+      'SMTP server starting',
+    );
   }
 
   stop(): void {

@@ -8,3 +8,4 @@ services:
       CLIENT_SECRET: "your-client-app-secret"
     ports:
       - "25:25"
+      - "587:587"
