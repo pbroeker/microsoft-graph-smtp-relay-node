@@ -1,0 +1,10 @@
+version: "3"
+services:
+  smtp_relay:
+    build: ..
+    environment:
+      AUTHORITY: "https://login.microsoftonline.com/your-tenant-id"
+      CLIENT_ID: "your-client-app-id"
+      CLIENT_SECRET: "your-client-app-secret"
+    ports:
+      - "25:25"
